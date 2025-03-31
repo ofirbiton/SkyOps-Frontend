@@ -14,8 +14,6 @@ export default function MapContainer() {
         background: "1",
         layersMode: 1,
         zoomButtons: false,
-        search: true,
-        measure: true
       });
     });
   }, []);

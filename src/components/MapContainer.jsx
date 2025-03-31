@@ -13,8 +13,6 @@ export default function MapContainer() {
         background: "1",
         layersMode: 1,
         zoomButtons: false,
-        showStreetNames: false,  // ביטול שמות הרחובות
-        showHouseNumbers: false,
       });
     });
   }, []);

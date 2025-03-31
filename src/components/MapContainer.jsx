@@ -18,7 +18,7 @@ export default function MapContainer() {
   }, []);
 
   const showExample = () => {
-    window.govmap.showMeasure();  
+    govmap.showMeasure();  
   };
 
   return (

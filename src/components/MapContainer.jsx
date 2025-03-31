@@ -7,7 +7,7 @@ export default function MapContainer() {
     window.jQuery(document).ready(function () {
       window.govmap.createMap("map", {
         token: "7f0764a7-7a42-4214-a98b-cb669559d9cb",
-        layers: ["GASSTATIONS", "PARCEL_HOKS", "KSHTANN_ASSETS", "bus_stops", "PARCEL_ALL"],
+        //layers: ["GASSTATIONS", "PARCEL_HOKS", "KSHTANN_ASSETS", "bus_stops", "PARCEL_ALL"],
         showXY: true,
         identifyOnClick: true,
         isEmbeddedToggle: false,

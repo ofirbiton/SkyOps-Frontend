@@ -22,9 +22,7 @@ export default function MapContainer() {
   };
 
   return (
-    <div>
       <div id="map" className="map-container"></div>
       <button onClick={showExample}>Show Example</button>
-    </div>
   );
 }

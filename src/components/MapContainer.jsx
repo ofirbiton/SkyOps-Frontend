@@ -17,7 +17,7 @@ export default function MapContainer() {
       });
     });
     function showExample(){
-            window.govmap.showMeasure();  
+            govmap.showMeasure();  
         }
   }, []);
 

@@ -3,11 +3,10 @@ import "./MapContainer.css";
 
 export default function MapContainer() {
   useEffect(() => {
-    // בעת טעינת המסמך, יוצרים את המפה בתוך האלמנט עם id="map"
+    // יצירת המפה כאשר הדף נטען
     window.jQuery(document).ready(function () {
       window.govmap.createMap("map", {
         token: "7f0764a7-7a42-4214-a98b-cb669559d9cb",
-        
         showXY: true,
         identifyOnClick: true,
         isEmbeddedToggle: false,
@@ -16,13 +15,16 @@ export default function MapContainer() {
         zoomButtons: false,
       });
     });
-    function showExample(){
-            window.govmap.showMeasure();  
-        }
-    <button onClick="showExample()">Show Example</button>;
   }, []);
 
-  // div זה נוצר על ידי React ומוגדר id="map" כך שהGovMap יזהה אותו
-  return <div id="map" className="map-container"></div>;
+  const showExample = () => {
+    window.govmap.showMeasure();  
+  };
 
+  return (
+    <div>
+      <div id="map" className="map-container"></div>
+      <button onClick={showExample}>Show Example</button>
+    </div>
+  );
 }

@@ -19,9 +19,10 @@ export default function MapContainer() {
     function showExample(){
             govmap.showMeasure();  
         }
+    <button onClick="showExample()">Show Example</button>;
   }, []);
 
   // div זה נוצר על ידי React ומוגדר id="map" כך שהGovMap יזהה אותו
   return <div id="map" className="map-container"></div>;
-  <button onClick="showExample()">Show Example</button>;
+
 }

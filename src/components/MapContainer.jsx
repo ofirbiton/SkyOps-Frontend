@@ -3,7 +3,7 @@ import "./MapContainer.css";
 
 export default function MapContainer() {
   useEffect(() => {
-    // יצירת המפה כאשר הדף נטען
+    // בעת טעינת המסמך, יוצרים את המפה בתוך האלמנט עם id="map"
     window.jQuery(document).ready(function () {
       window.govmap.createMap("map", {
         token: "7f0764a7-7a42-4214-a98b-cb669559d9cb",
@@ -17,12 +17,6 @@ export default function MapContainer() {
     });
   }, []);
 
-  const showExample = () => {
-    govmap.showMeasure();  
-  };
-
-  return (
-      <div id="map" className="map-container"></div>
-      <button onClick={showExample}>Show Example</button>
-  );
+  // div זה נוצר על ידי React ומוגדר id="map" כך שהGovMap יזהה אותו
+  return <div id="map" className="map-container"></div>;
 }

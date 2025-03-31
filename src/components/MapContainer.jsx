@@ -16,10 +16,11 @@ export default function MapContainer() {
         zoomButtons: false,
       });
     });
-  }, []);
-function showExample(){
+    function showExample(){
             govmap.showMeasure();  
         }
+  }, []);
+
   // div זה נוצר על ידי React ומוגדר id="map" כך שהGovMap יזהה אותו
   return <div id="map" className="map-container"></div>;
 }

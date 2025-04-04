@@ -1,0 +1,22 @@
+/* עוטפת את כל הרכיב, ומבטיחה שימלא את כל החלל הרצוי */
+.map-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+/* מיכל המפה עצמו – ימלא את השטח של map-wrapper */
+.map-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* כפתור המדידה: ממקם אותו באופן מוחלט בפינה העליונה */
+.measure-button {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+}

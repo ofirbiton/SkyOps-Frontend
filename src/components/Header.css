@@ -1,0 +1,105 @@
+.header {
+  height: 10vh;
+  background-color: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2vw;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* אזור לוגו */
+.logo {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 80%;
+  width: auto;
+}
+
+/* שורת הכפתורים הכוללת */
+.button-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: nowrap;
+  flex: 1;
+}
+
+/* כפתורי משימה */
+.task-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+/* כפתורי מערכת */
+.system-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+/* שדה חיפוש */
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-input {
+  padding: 1.3vh 2vh;
+  font-size: 1.8vh;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 200px;
+  direction: rtl;
+}
+
+/* כפתור ראשי */
+.primary-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 1.3vh 2.6vh;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 1.8vh;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.primary-button:hover {
+  background-color: #0056b3;
+}
+
+/* כפתור משני */
+.secondary-button {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 1.3vh 2.6vh;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 1.8vh;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.secondary-button:hover {
+  background-color: #e6e6e6;
+}
+
+.search-input {
+  padding: 1.3vh 2.6vh;
+  font-size: 1.8vh;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 12vw;
+}

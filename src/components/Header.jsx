@@ -6,14 +6,48 @@ export default function Header({ taskMode, onToggleTaskMode }) {
   const [searchText, setSearchText] = useState("");
 
   const handleDrawRectangle = () => {
-    if (window.govmap) {
-      window.govmap
-        .draw(window.govmap.drawType.Rectangle)
-        .progress(() => {
+    if (!window.govmap) return;
+  
+    window.govmap
+      .draw(window.govmap.drawType.Rectangle)
+      .progress((response) => {
+        try {
+          const wkt = response?.wkt;
+          if (!wkt || !wkt.startsWith("POLYGON")) return;
+  
+          // חילוץ נקודות מה-WKT
+          const coords = wkt
+            .replace("POLYGON((", "")
+            .replace("))", "")
+            .split(",")
+            .map((pair) => pair.trim().split(" ").map(Number));
+  
+          // משתמשים בשתי הנקודות הראשונות: פינה שמאלית עליונה וימנית תחתונה
+          const [x1, y1] = coords[0];
+          const [x2, y2] = coords[2];
+  
+          const width = Math.abs(x2 - x1);
+          const height = Math.abs(y2 - y1);
+  
+          const maxWidth = 1100;
+          const maxHeight = 500;
+  
+          if (width > maxWidth || height > maxHeight) {
+            alert(
+              `המלבן חורג מהמידות המותרות. הרוחב המרבי: ${maxWidth} והגובה המרבי: ${maxHeight}.`
+            );
+            return;
+          }
+  
+          // אם המלבן תקין – התמקדות
           window.govmap.zoomToDrawing();
-        });
-    }
+        } catch (err) {
+          console.error("שגיאה בטיפול במלבן:", err);
+          alert("אירעה שגיאה בעת בדיקת המלבן.");
+        }
+      });
   };
+  
 
   const handleSearch = async (e) => {
     e?.preventDefault?.();

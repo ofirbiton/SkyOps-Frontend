@@ -42,8 +42,7 @@ export default function Header({ taskMode, onToggleTaskMode }) {
         window.govmap.zoomToXY({
           x: X,
           y: Y,
-          level: 10,
-          marker: true,
+          level: 6,
         });
       } else {
         alert("לא נמצאה תוצאה מדויקת.");

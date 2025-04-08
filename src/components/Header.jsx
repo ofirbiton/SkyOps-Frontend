@@ -41,8 +41,16 @@ export default function Header({ taskMode, onToggleTaskMode }) {
               return;
             }
   
-            // אם חוקי – התמקדות
-            window.govmap.zoomToDrawing();
+            
+            // אם חוקי – התמקדות ל-1:2500 ברקע רחובות ומבנים
+            window.govmap.setBackground("3");
+            window.govmap.zoomToXY({
+              x: (x1 + x2) / 2,
+              y: (y1 + y2) / 2,
+              level: 9, 
+              marker: false,
+            });
+            
           } catch (err) {
             console.error("שגיאה בבדיקת המלבן:", err);
             alert("אירעה שגיאה בעת בדיקת המלבן.");

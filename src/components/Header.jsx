@@ -12,16 +12,29 @@ export default function Header({ taskMode, onToggleTaskMode }) {
     const yMax = Math.max(y1, y2);
     const centerX = (xMin + xMax) / 2;
     const centerY = (yMin + yMax) / 2;
-
-    const extentParam = `{"spatialReference":{"wkid":2039},"xmin":${xMin},"ymin":${yMin},"xmax":${xMax},"ymax":${yMax}}`;
-
-    const exportUrl = `https://ags.govmap.gov.il/ExportMap/ExportMap?CenterX=${centerX}&CenterY=${centerY}&sExtent=${encodeURIComponent(
-      extentParam
-    )}&Level=9&Resolution=0.661459656252646&Scale=2500&VisibleLayers={}&IsSharedBg=false&VisibleBg=%5B%22MapCacheNational%22%5D&AddMapiLogo=true&DefinitionExp={}`;
-
-    window.open(exportUrl, "_blank");
+  
+    const extentParam = encodeURIComponent(
+      JSON.stringify({
+        spatialReference: { wkid: 2039 },
+        xmin: xMin,
+        ymin: yMin,
+        xmax: xMax,
+        ymax: yMax,
+      })
+    );
+  
+    const baseUrl = "https://ags.govmap.gov.il/ExportMap/ExportMap";
+  
+    // רחובות ומבנים – רקע 3
+    const urlStreets = `${baseUrl}?CenterX=${centerX}&CenterY=${centerY}&sExtent=${extentParam}&Level=9&Resolution=0.661459656252646&Scale=2500&VisibleLayers={}&IsSharedBg=false&VisibleBg=["MapCacheNational"]&AddMapiLogo=true&DefinitionExp={}`;
+  
+    // תצלום אוויר – רקע משותף 19
+    const urlOrtho = `${baseUrl}?CenterX=${centerX}&CenterY=${centerY}&sExtent=${extentParam}&Level=9&Resolution=0.661459656252646&Scale=2500&VisibleLayers={}&IsSharedBg=true&VisibleBg=[19]&AddMapiLogo=true&DefinitionExp={}`;
+  
+    window.open(urlStreets, "_blank");
+    window.open(urlOrtho, "_blank");
   };
-
+  
   const handleDrawRectangle = () => {
     if (!window.govmap) return;
 

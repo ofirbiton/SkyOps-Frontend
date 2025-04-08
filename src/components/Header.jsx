@@ -28,8 +28,8 @@ export default function Header({ taskMode, onToggleTaskMode }) {
             const width = Math.abs(x2 - x1);
             const height = Math.abs(y2 - y1);
   
-            const maxWidth = 1000;
-            const maxHeight = 450;
+            const maxWidth = 1500;
+            const maxHeight = 1500;
   
             if (width > maxWidth || height > maxHeight) {
               alert(

@@ -5,9 +5,26 @@ import logo from "../Images/skyops logo.png";
 export default function Header({ taskMode, onToggleTaskMode }) {
   const [searchText, setSearchText] = useState("");
 
+  const exportMapImage = ({ x1, y1, x2, y2 }) => {
+    const xMin = Math.min(x1, x2);
+    const xMax = Math.max(x1, x2);
+    const yMin = Math.min(y1, y2);
+    const yMax = Math.max(y1, y2);
+    const centerX = (xMin + xMax) / 2;
+    const centerY = (yMin + yMax) / 2;
+
+    const extentParam = `{"spatialReference":{"wkid":2039},"xmin":${xMin},"ymin":${yMin},"xmax":${xMax},"ymax":${yMax}}`;
+
+    const exportUrl = `https://ags.govmap.gov.il/ExportMap/ExportMap?CenterX=${centerX}&CenterY=${centerY}&sExtent=${encodeURIComponent(
+      extentParam
+    )}&Level=9&Resolution=0.661459656252646&Scale=2500&VisibleLayers={}&IsSharedBg=false&VisibleBg=%5B%22MapCacheNational%22%5D&AddMapiLogo=true&DefinitionExp={}`;
+
+    window.open(exportUrl, "_blank");
+  };
+
   const handleDrawRectangle = () => {
     if (!window.govmap) return;
-  
+
     const startDrawing = () => {
       window.govmap
         .draw(window.govmap.drawType.Rectangle)
@@ -15,52 +32,52 @@ export default function Header({ taskMode, onToggleTaskMode }) {
           try {
             const wkt = response?.wkt;
             if (!wkt || !wkt.startsWith("POLYGON")) return;
-  
+
             const coords = wkt
               .replace("POLYGON((", "")
               .replace("))", "")
               .split(",")
               .map((pair) => pair.trim().split(" ").map(Number));
-  
+
             const [x1, y1] = coords[0];
             const [x2, y2] = coords[2];
-  
+
             const width = Math.abs(x2 - x1);
             const height = Math.abs(y2 - y1);
-  
+
             const maxWidth = 1500;
             const maxHeight = 1500;
-  
+
             if (width > maxWidth || height > maxHeight) {
               alert(
                 `⚠️ המלבן חורג מהמידות המותרות.\nרוחב מקסימלי: ${maxWidth}, גובה מקסימלי: ${maxHeight}.\nאנא נסה שוב.`
               );
-  
-              // התחלה מחדש של הציור – רקורסיה
               startDrawing();
               return;
             }
-  
-            
-            // אם חוקי – התמקדות ל-1:2500 ברקע רחובות ומבנים
+
+            // החלפת רקע לרחובות ומבנים
             window.govmap.setBackground("3");
+
+            // התמקדות לקנ"מ 1:2500 במרכז המלבן
             window.govmap.zoomToXY({
               x: (x1 + x2) / 2,
               y: (y1 + y2) / 2,
-              level: 9, 
+              level: 9,
               marker: false,
             });
-            
+
+            // שמירת תמונת מפה
+            exportMapImage({ x1, y1, x2, y2 });
           } catch (err) {
             console.error("שגיאה בבדיקת המלבן:", err);
             alert("אירעה שגיאה בעת בדיקת המלבן.");
           }
         });
     };
-  
-    startDrawing(); // התחלת הציור הראשונה
+
+    startDrawing();
   };
-  
 
   const handleSearch = async (e) => {
     e?.preventDefault?.();

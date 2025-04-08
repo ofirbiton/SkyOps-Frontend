@@ -4,6 +4,7 @@ import logo from "../Images/skyops logo.png";
 
 export default function Header({ taskMode, onToggleTaskMode }) {
   const [searchText, setSearchText] = useState("");
+  const [pendingRectangle, setPendingRectangle] = useState(null);
 
   const exportMapImage = ({ x1, y1, x2, y2 }) => {
     const xMin = Math.min(x1, x2);
@@ -12,7 +13,7 @@ export default function Header({ taskMode, onToggleTaskMode }) {
     const yMax = Math.max(y1, y2);
     const centerX = (xMin + xMax) / 2;
     const centerY = (yMin + yMax) / 2;
-  
+
     const extentParam = encodeURIComponent(
       JSON.stringify({
         spatialReference: { wkid: 2039 },
@@ -22,23 +23,22 @@ export default function Header({ taskMode, onToggleTaskMode }) {
         ymax: yMax,
       })
     );
-  
+
     const baseUrl = "https://ags.govmap.gov.il/ExportMap/ExportMap";
-  
-    // רחובות ומבנים – רקע 3
-    const urlStreets = `${baseUrl}?CenterX=${centerX}&CenterY=${centerY}&sExtent=${extentParam}&Level=9&Resolution=0.661459656252646&Scale=2500&VisibleLayers={}&IsSharedBg=false&VisibleBg=["MapCacheNational"]&AddMapiLogo=true&DefinitionExp={}`;
-  
-    // תצלום אוויר – רקע משותף 19
+
+    const urlStreets = `${baseUrl}?CenterX=${centerX}&CenterY=${centerY}&sExtent=${extentParam}&Level=9&Resolution=0.661459656252646&Scale=2500&VisibleLayers={}&IsSharedBg=false&VisibleBg=[\"MapCacheNational\"]&AddMapiLogo=true&DefinitionExp={}`;
+
     const urlOrtho = `${baseUrl}?CenterX=${centerX}&CenterY=${centerY}&sExtent=${extentParam}&Level=9&Resolution=0.661459656252646&Scale=2500&VisibleLayers={}&IsSharedBg=true&VisibleBg=[19]&AddMapiLogo=true&DefinitionExp={}`;
-  
+
     window.open(urlStreets, "_blank");
     window.open(urlOrtho, "_blank");
   };
-  
+
   const handleDrawRectangle = () => {
     if (!window.govmap) return;
 
     const startDrawing = () => {
+      setPendingRectangle(null);
       window.govmap
         .draw(window.govmap.drawType.Rectangle)
         .progress((response) => {
@@ -69,19 +69,17 @@ export default function Header({ taskMode, onToggleTaskMode }) {
               return;
             }
 
-            // החלפת רקע לרחובות ומבנים
-            window.govmap.setBackground("3");
+            // הצגת כפתורי אישור
+            setPendingRectangle({ x1, y1, x2, y2 });
 
-            // התמקדות לקנ"מ 1:2500 במרכז המלבן
+            // התמקדות למרכז המלבן
+            window.govmap.setBackground("3");
             window.govmap.zoomToXY({
               x: (x1 + x2) / 2,
               y: (y1 + y2) / 2,
               level: 9,
               marker: false,
             });
-
-            // שמירת תמונת מפה
-            exportMapImage({ x1, y1, x2, y2 });
           } catch (err) {
             console.error("שגיאה בבדיקת המלבן:", err);
             alert("אירעה שגיאה בעת בדיקת המלבן.");
@@ -111,16 +109,9 @@ export default function Header({ taskMode, onToggleTaskMode }) {
         type: window.govmap.geocodeType.AccuracyOnly,
       });
 
-      console.log("תשובת govmap.geocode:", response);
-
       if (response?.data?.length > 0 && response.data[0].ResultType === 1) {
         const { X, Y } = response.data[0];
-
-        window.govmap.zoomToXY({
-          x: X,
-          y: Y,
-          level: 6,
-        });
+        window.govmap.zoomToXY({ x: X, y: Y, level: 6 });
       } else {
         alert("לא נמצאה תוצאה מדויקת.");
       }
@@ -169,6 +160,30 @@ export default function Header({ taskMode, onToggleTaskMode }) {
           </button>
         </div>
       </div>
+
+      {/* כפתורי אישור גבולות – רק אם יש מלבן ממתין */}
+      {pendingRectangle && (
+        <div className="confirm-buttons">
+          <button
+            className="primary-button"
+            onClick={() => {
+              exportMapImage(pendingRectangle);
+              setPendingRectangle(null);
+            }}
+          >
+            אישור גבולות גזרה
+          </button>
+          <button
+            className="secondary-button"
+            onClick={() => {
+              setPendingRectangle(null);
+              handleDrawRectangle();
+            }}
+          >
+            סימון גבולות גזרה מחדש
+          </button>
+        </div>
+      )}
     </div>
   );
 }

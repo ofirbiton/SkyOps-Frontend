@@ -315,7 +315,7 @@ export default function Header({ taskMode, onToggleTaskMode }) {
                 formData.append("bottom_right_coord", bottomRightCoord);
             
                 // שליחה לשרת
-                const response = await fetch("skyops-backend.railway.internal/api/create-mission", {
+                const response = await fetch("skyops-backend-production.up.railway.app/api/create-mission", {
                   method: "POST",
                   body: formData,
                 });

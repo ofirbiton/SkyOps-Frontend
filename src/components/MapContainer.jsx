@@ -10,7 +10,7 @@ export default function MapContainer() {
 
     window.jQuery(document).ready(function () {
       window.govmap.createMap("map", {
-        token: "5a4b8472-b95b-4687-8179-0ccb621c7990", 
+        token: "7f0764a7-7a42-4214-a98b-cb669559d9cb", 
         layers: ["contour"],
         showXY: true,
         identifyOnClick: true,

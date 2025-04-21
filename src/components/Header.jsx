@@ -1,11 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import "./Header.css";
 import logo from "../Images/skyops logo.png";
 
 export default function Header({ taskMode, onToggleTaskMode }) {
   const [searchText, setSearchText] = useState("");
   const [pendingRectangle, setPendingRectangle] = useState(null);
-  const [hasDrawn, setHasDrawn] = useState(false); // חדש
+  const [hasDrawn, setHasDrawn] = useState(false);
+  const [orthoImageUrl, setOrthoImageUrl] = useState(null);
+  const [streetsImageUrl, setStreetsImageUrl] = useState(null);
+  const [takeoffPixel, setTakeoffPixel] = useState(null);
+  const [landingPixel, setLandingPixel] = useState(null);
+  const [clickStage, setClickStage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const imageRef = useRef();
 
   const exportMapImage = ({ x1, y1, x2, y2 }) => {
     const xMin = Math.min(x1, x2);
@@ -26,12 +33,55 @@ export default function Header({ taskMode, onToggleTaskMode }) {
     );
 
     const baseUrl = "https://ags.govmap.gov.il/ExportMap/ExportMap";
+    const sharedParams = `?CenterX=${centerX}&CenterY=${centerY}` +
+      `&sExtent=${extentParam}` +
+      `&Level=9&Resolution=0.661459656252646&Scale=2500` +
+      `&VisibleLayers={}&DefinitionExp={}&AddMapiLogo=true`;
 
-    const urlStreets = `${baseUrl}?CenterX=${centerX}&CenterY=${centerY}&sExtent=${extentParam}&Level=9&Resolution=0.661459656252646&Scale=2500&VisibleLayers={}&IsSharedBg=false&VisibleBg=["MapCacheNational"]&AddMapiLogo=true&DefinitionExp={}`;
-    const urlOrtho = `${baseUrl}?CenterX=${centerX}&CenterY=${centerY}&sExtent=${extentParam}&Level=9&Resolution=0.661459656252646&Scale=2500&VisibleLayers={}&IsSharedBg=true&VisibleBg=[19]&AddMapiLogo=true&DefinitionExp={}`;
+    const urlStreets = `${baseUrl}${sharedParams}&IsSharedBg=false&VisibleBg=["MapCacheNational"]`;
+    const urlOrtho = `${baseUrl}${sharedParams}&IsSharedBg=true&VisibleBg=[19]`;
 
-    window.open(urlStreets, "_blank");
-    window.open(urlOrtho, "_blank");
+    setOrthoImageUrl(urlOrtho);
+    setStreetsImageUrl(urlStreets);
+    setClickStage("takeoff");
+  };
+
+  const handleImageClick = (e) => {
+    if (!imageRef.current) return;
+    const offsetX = e.nativeEvent.offsetX;
+    const offsetY = e.nativeEvent.offsetY;
+
+    if (clickStage === "takeoff") {
+      setTakeoffPixel({ x: offsetX, y: offsetY });
+    } else if (clickStage === "landing") {
+      setLandingPixel({ x: offsetX, y: offsetY });
+    }
+  };
+  const drawPixelsOnStreetsImage = async () => {
+    const streetsImg = new Image();
+    streetsImg.crossOrigin = "anonymous";
+    streetsImg.src = streetsImageUrl;
+
+    await new Promise((res) => streetsImg.onload = res);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = streetsImg.width;
+    canvas.height = streetsImg.height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(streetsImg, 0, 0);
+
+    ctx.fillStyle = "lime";
+    ctx.fillRect(takeoffPixel.x, takeoffPixel.y, 1, 1);
+
+    ctx.fillStyle = "red";
+    ctx.fillRect(landingPixel.x, landingPixel.y, 1, 1);
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        console.log("🗺️ Blob רחובות עם פיקסלים:", blob);
+        resolve(blob);
+      }, "image/png");
+    });
   };
 
   const handleDrawRectangle = () => {
@@ -39,7 +89,7 @@ export default function Header({ taskMode, onToggleTaskMode }) {
 
     const startDrawing = () => {
       setPendingRectangle(null);
-      setHasDrawn(true); // חדש – מונע מהכפתור להופיע שוב
+      setHasDrawn(true);
 
       window.govmap
         .draw(window.govmap.drawType.Rectangle)
@@ -59,14 +109,8 @@ export default function Header({ taskMode, onToggleTaskMode }) {
 
             const width = Math.abs(x2 - x1);
             const height = Math.abs(y2 - y1);
-            if (width < 100 || height < 100) {
-              alert("⚠️ המלבן קטן מידי. אנא בחר/י בשנית.");
-              startDrawing();
-              return;
-            }
-
-            if (width > 1500 || height > 1500) {
-              alert("⚠️ המלבן חורג מהמידות. אנא בחר/י בשנית.");
+            if (width < 100 || height < 100 || width > 1500 || height > 1500) {
+              alert("⚠️ מימדי המלבן לא חוקיים. נסה/י שוב.");
               startDrawing();
               return;
             }
@@ -88,7 +132,6 @@ export default function Header({ taskMode, onToggleTaskMode }) {
 
     startDrawing();
   };
-
   const handleSearch = async (e) => {
     e?.preventDefault?.();
     if (!searchText.trim()) return;
@@ -115,11 +158,12 @@ export default function Header({ taskMode, onToggleTaskMode }) {
     if (taskMode) {
       setPendingRectangle(null);
       setSearchText("");
-      setHasDrawn(false); // מאפס את הדגל כשמבטלים משימה
-
-      if (window.govmap?.clear) {
-        window.govmap.clear();
-      }
+      setHasDrawn(false);
+      setOrthoImageUrl(null);
+      setStreetsImageUrl(null);
+      setClickStage(null);
+      setTakeoffPixel(null);
+      setLandingPixel(null);
     }
 
     onToggleTaskMode();
@@ -128,6 +172,7 @@ export default function Header({ taskMode, onToggleTaskMode }) {
   return (
     <>
       <div className="header">
+        {/* חיפוש */}
         <div className="search-container">
           <input
             type="text"
@@ -139,20 +184,15 @@ export default function Header({ taskMode, onToggleTaskMode }) {
           <button className="secondary-button" onClick={handleSearch}>
             חפש
           </button>
-          <button
-            className="secondary-button"
-            onClick={() => window.govmap?.showMeasure()}
-          >
+          <button className="secondary-button" onClick={() => window.govmap?.showMeasure()}>
             הפעל מדידה
           </button>
         </div>
 
+        {/* כפתורים */}
         <div className="button-bar">
           {taskMode && !hasDrawn && (
-            <button
-              className="secondary-button"
-              onClick={handleDrawRectangle}
-            >
+            <button className="secondary-button" onClick={handleDrawRectangle}>
               סימון גבולות גזרה
             </button>
           )}
@@ -166,7 +206,124 @@ export default function Header({ taskMode, onToggleTaskMode }) {
         </div>
       </div>
 
-      {pendingRectangle && (
+      {orthoImageUrl && clickStage && (
+        <div style={{
+          position: "absolute",
+          top: "10vh",
+          left: 0,
+          width: "100%",
+          height: "90vh",
+          backgroundColor: "white",
+          zIndex: 2000,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column"
+        }}>
+          <div style={{ position: "relative" }}>
+            <img
+              ref={imageRef}
+              src={orthoImageUrl}
+              alt="תצלום אוויר"
+              onClick={handleImageClick}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+                border: "1px solid #ccc",
+                cursor: "crosshair"
+              }}
+            />
+            {takeoffPixel && (
+              <div style={{
+                position: "absolute",
+                top: takeoffPixel.y - 5,
+                left: takeoffPixel.x - 5,
+                width: 10,
+                height: 10,
+                backgroundColor: "lime",
+                borderRadius: "50%",
+                border: "2px solid black",
+                pointerEvents: "none"
+              }} />
+            )}
+            {landingPixel && (
+              <div style={{
+                position: "absolute",
+                top: landingPixel.y - 5,
+                left: landingPixel.x - 5,
+                width: 10,
+                height: 10,
+                backgroundColor: "red",
+                borderRadius: "50%",
+                border: "2px solid black",
+                pointerEvents: "none"
+              }} />
+            )}
+          </div>
+
+          {/* כפתורים לפי שלב */}
+          {clickStage === "takeoff" && takeoffPixel && (
+            <button onClick={() => setClickStage("landing")} className="primary-button mt-2">
+              אישור נקודת המראה
+            </button>
+          )}
+          {clickStage === "landing" && landingPixel && (
+            <button onClick={() => setClickStage("done")} className="primary-button mt-2">
+              אישור נקודת נחיתה
+            </button>
+          )}
+          {clickStage === "done" && takeoffPixel && landingPixel && (
+            <button
+            onClick={async () => {
+              if (isSubmitting) return; // מונע לחיצות כפולות
+              setIsSubmitting(true);
+            
+              try {
+                // תצלום אוויר
+                const orthoRes = await fetch(orthoImageUrl);
+                const orthoBlob = await orthoRes.blob();
+                const orthoUrl = URL.createObjectURL(orthoBlob);
+                const orthoLink = document.createElement("a");
+                orthoLink.href = orthoUrl;
+                orthoLink.download = "ortho.png";
+                orthoLink.click();
+                URL.revokeObjectURL(orthoUrl);
+            
+                // מפת רחובות
+                const streetsBlob = await drawPixelsOnStreetsImage();
+                const streetsUrl = URL.createObjectURL(streetsBlob);
+                const streetsLink = document.createElement("a");
+                streetsLink.href = streetsUrl;
+                streetsLink.download = "streets_with_markers.png";
+                streetsLink.click();
+                URL.revokeObjectURL(streetsUrl);
+            
+                // איפוס
+                setOrthoImageUrl(null);
+                setStreetsImageUrl(null);
+                setClickStage(null);
+                setTakeoffPixel(null);
+                setLandingPixel(null);
+                setHasDrawn(false);
+                setPendingRectangle(null);
+                setIsSubmitting(false); // אופציונלי אם רוצים לאפשר שליחה חוזרת בהמשך
+              } catch (error) {
+                console.error("שגיאה בהורדה:", error);
+                alert("אירעה שגיאה.");
+                setIsSubmitting(false);
+              }
+            }}
+            
+              className="primary-button mt-2"
+            >
+              אישור שליחת משימה
+            </button>
+          )}
+        </div>
+      )}
+
+      {pendingRectangle && !orthoImageUrl && (
         <div className="floating-confirm-buttons">
           <button
             className="primary-button"

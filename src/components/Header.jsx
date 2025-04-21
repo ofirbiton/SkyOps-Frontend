@@ -315,10 +315,10 @@ export default function Header({ taskMode, onToggleTaskMode }) {
                 formData.append("bottom_right_coord", bottomRightCoord);
             
                 // שליחה לשרת
-                const response = await fetch("skyops-backend-production.up.railway.app/api/create-mission", {
-                  method: "POST",
-                  body: formData,
-                });
+                const response = await fetch("https://skyops-backend.up.railway.app/api/create-mission", {
+                method: "POST",
+                body: formData,
+              });
             
                 const result = await response.json();
                 console.log("📡 תגובת השרת:", result);

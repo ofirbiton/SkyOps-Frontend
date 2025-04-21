@@ -12,6 +12,7 @@ export default function Header({ taskMode, onToggleTaskMode }) {
   const [landingPixel, setLandingPixel] = useState(null);
   const [clickStage, setClickStage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [boundingBox, setBoundingBox] = useState(null);
   const imageRef = useRef();
 
   const exportMapImage = ({ x1, y1, x2, y2 }) => {
@@ -50,11 +51,24 @@ export default function Header({ taskMode, onToggleTaskMode }) {
     if (!imageRef.current) return;
     const offsetX = e.nativeEvent.offsetX;
     const offsetY = e.nativeEvent.offsetY;
-
+    const image = imageRef.current;
+    const naturalWidth = image.naturalWidth;
+    const naturalHeight = image.naturalHeight;
+    const displayedWidth = image.clientWidth;
+    const displayedHeight = image.clientHeight;
+    
+    // חישוב יחס תצוגה מול תמונה מקורית
+    const scaleX = naturalWidth / displayedWidth;
+    const scaleY = naturalHeight / displayedHeight;
+    
+    // חישוב קואורדינטות מדויקות בהתאם לתמונה המקורית
+    const correctedX = Math.round(e.nativeEvent.offsetX * scaleX);
+    const correctedY = Math.round(e.nativeEvent.offsetY * scaleY);
+    
     if (clickStage === "takeoff") {
-      setTakeoffPixel({ x: offsetX, y: offsetY });
+      setTakeoffPixel({ x: correctedX, y: correctedY });
     } else if (clickStage === "landing") {
-      setLandingPixel({ x: offsetX, y: offsetY });
+      setLandingPixel({ x: correctedX, y: correctedY });
     }
   };
   const drawPixelsOnStreetsImage = async () => {
@@ -116,6 +130,7 @@ export default function Header({ taskMode, onToggleTaskMode }) {
             }
 
             setPendingRectangle({ x1, y1, x2, y2 });
+            setBoundingBox({ x1, y1, x2, y2 });
 
             window.govmap.zoomToXY({
               x: (x1 + x2) / 2,
@@ -164,6 +179,7 @@ export default function Header({ taskMode, onToggleTaskMode }) {
       setClickStage(null);
       setTakeoffPixel(null);
       setLandingPixel(null);
+      setBoundingBox(null);
     }
 
     onToggleTaskMode();
@@ -276,28 +292,36 @@ export default function Header({ taskMode, onToggleTaskMode }) {
           {clickStage === "done" && takeoffPixel && landingPixel && (
             <button
             onClick={async () => {
-              if (isSubmitting) return; // מונע לחיצות כפולות
+              if (isSubmitting) return;
               setIsSubmitting(true);
             
               try {
-                // תצלום אוויר
+                // קבלת תצלום האוויר
                 const orthoRes = await fetch(orthoImageUrl);
                 const orthoBlob = await orthoRes.blob();
-                const orthoUrl = URL.createObjectURL(orthoBlob);
-                const orthoLink = document.createElement("a");
-                orthoLink.href = orthoUrl;
-                orthoLink.download = "ortho.png";
-                orthoLink.click();
-                URL.revokeObjectURL(orthoUrl);
             
-                // מפת רחובות
+                // יצירת מפת רחובות עם פיקסלים
                 const streetsBlob = await drawPixelsOnStreetsImage();
-                const streetsUrl = URL.createObjectURL(streetsBlob);
-                const streetsLink = document.createElement("a");
-                streetsLink.href = streetsUrl;
-                streetsLink.download = "streets_with_markers.png";
-                streetsLink.click();
-                URL.revokeObjectURL(streetsUrl);
+            
+                // בניית ה־FormData
+                const formData = new FormData();
+                formData.append("satellite_image", orthoBlob, "ortho.png");
+                formData.append("buildings_image", streetsBlob, "streets_with_markers.png");
+            
+                // בניית הקואורדינטות בפורמט "(x, y)"
+                const topLeftCoord = `(${boundingBox.x1}, ${boundingBox.y1})`;
+                const bottomRightCoord = `(${boundingBox.x2}, ${boundingBox.y2})`;
+                formData.append("top_left_coord", topLeftCoord);
+                formData.append("bottom_right_coord", bottomRightCoord);
+            
+                // שליחה לשרת
+                const response = await fetch("http://127.0.0.1:5000/api/create-mission", {
+                  method: "POST",
+                  body: formData,
+                });
+            
+                const result = await response.json();
+                console.log("📡 תגובת השרת:", result);
             
                 // איפוס
                 setOrthoImageUrl(null);
@@ -307,14 +331,13 @@ export default function Header({ taskMode, onToggleTaskMode }) {
                 setLandingPixel(null);
                 setHasDrawn(false);
                 setPendingRectangle(null);
-                setIsSubmitting(false); // אופציונלי אם רוצים לאפשר שליחה חוזרת בהמשך
+                setIsSubmitting(false);
               } catch (error) {
-                console.error("שגיאה בהורדה:", error);
-                alert("אירעה שגיאה.");
+                console.error("❌ שגיאה בשליחה לשרת:", error);
+                alert("אירעה שגיאה בשליחת המשימה.");
                 setIsSubmitting(false);
               }
             }}
-            
               className="primary-button mt-2"
             >
               אישור שליחת משימה

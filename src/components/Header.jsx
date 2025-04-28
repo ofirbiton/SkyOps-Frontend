@@ -63,8 +63,8 @@ export default function Header({ taskMode, onToggleTaskMode }) {
 
       navigate("/mission-result", {
         state: {
-          imageUrl: "https://skyops-backend-production.up.railway.app/api/create-mission" + result.satelliteImageUrl,
-          textFileUrl: "https://skyops-backend-production.up.railway.app/api/create-mission" + result.coordinatesFileUrl,
+          imageUrl: result.satelliteImageUrl,
+          textFileUrl: result.coordinatesFileUrl,
         }
       });
       

@@ -1,21 +1,21 @@
 import React, { useState } from "react";
 import styles from "./Header.module.css";
 
-import Logo from "./Logo/Logo";
-import SearchBar from "./SearchBar/SearchBar";
-import TaskButtons from "./TaskButtons/TaskButtons";
-import FloatingConfirmButtons from "./FloatingConfirmButtons/FloatingConfirmButtons";
-import MapClickOverlay from "./MapClickOverlay/MapClickOverlay";
-import LoadingOverlay from "./LoadingOverlay/LoadingOverlay";
+import Logo from "../Logo/Logo";
+import SearchBar from "../SearchBar/SearchBar";
+import TaskButtons from "../TaskButtons/TaskButtons";
+import FloatingConfirmButtons from "../FloatingConfirmButtons/FloatingConfirmButtons";
+import MapClickOverlay from "../MapClickOverlay/MapClickOverlay";
+import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { useSearch } from "./hooks/useSearch";
-import { useExportMap } from "./hooks/useExportMap";
-import { useSafeClear } from "./hooks/useSafeClear";
-import { useMissionSubmit } from "./hooks/useMissionSubmit";
+import { useSearch } from "../hooks/useSearch";
+import { useExportMap } from "../hooks/useExportMap";
+import { useSafeClear } from "../hooks/useSafeClear";
+import { useMissionSubmit } from "../hooks/useMissionSubmit";
 
-import { showMeasureTool } from "./utils/govmapApi";
-import { drawPixelsOnStreetsImage } from "./utils/imageUtils";
+import { showMeasureTool } from "../utils/govmapApi";
+import { drawPixelsOnStreetsImage } from "../utils/imageUtils";
 
 export default function Header() {
   const [searchText, setSearchText] = useState("");

@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import "./Header.css";
 import logo from "../Images/skyops logo.png";
+import { useNavigate, useLocation } from "react-router-dom";
+
 
 export default function Header({ taskMode, onToggleTaskMode }) {
   const [searchText, setSearchText] = useState("");
@@ -13,7 +15,82 @@ export default function Header({ taskMode, onToggleTaskMode }) {
   const [clickStage, setClickStage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [boundingBox, setBoundingBox] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const imageRef = useRef();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+
+  const handleResetAndGoHome = () => {
+    safeClearDrawings();
+    setPendingRectangle(null);
+    setSearchText("");
+    setHasDrawn(false);
+    setOrthoImageUrl(null);
+    setStreetsImageUrl(null);
+    setClickStage(null);
+    setTakeoffPixel(null);
+    setLandingPixel(null);
+    setBoundingBox(null);
+    setIsSubmitting(false);
+    onToggleTaskMode(false); // איפוס taskMode אם רלוונטי
+    navigate("/");
+  };
+  
+
+  const sendMission = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setIsLoadingRoute(true);
+    try {
+      const orthoBlob = await (await fetch(orthoImageUrl)).blob();
+      const streetsBlob = await drawPixelsOnStreetsImage();
+  
+      const formData = new FormData();
+      formData.append("satellite_image", orthoBlob, "ortho.png");
+      formData.append("buildings_image", streetsBlob, "streets_with_markers.png");
+      formData.append("top_left_coord", `(${boundingBox.x1}, ${boundingBox.y1})`);
+      formData.append("bottom_right_coord", `(${boundingBox.x2}, ${boundingBox.y2})`);
+  
+      const response = await fetch("http://127.0.0.1:5000/api/create-mission", {
+        method: "POST",
+        body: formData,
+      });
+  
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message || "שליחה נכשלה");
+
+      navigate("/mission-result", {
+        state: {
+          imageUrl: "http://127.0.0.1:5000" + result.satelliteImageUrl,
+          textFileUrl: "http://127.0.0.1:5000" + result.coordinatesFileUrl,
+        }
+      });
+      
+  
+    } catch (error) {
+      console.error("❌ שגיאה בשליחה לשרת:", error);
+      alert("אירעה שגיאה בשליחת המשימה.");
+      setIsSubmitting(false);
+      setIsLoadingRoute(false);
+    }
+  };
+  
+  function safeClearDrawings() {
+    if (
+      window.govmapReady &&
+      window.govmap &&
+      typeof window.govmap.clearDrawings === "function"
+    ) {
+      try {
+        window.govmap.clearDrawings();
+      } catch (_) {
+        // שקט מוחלט – בלי console.error
+      }
+    }
+  }
+
 
   const exportMapImage = ({ x1, y1, x2, y2 }) => {
     const xMin = Math.min(x1, x2);
@@ -170,7 +247,12 @@ export default function Header({ taskMode, onToggleTaskMode }) {
   };
 
   const handleToggleTaskMode = () => {
-    if (taskMode) {
+    if (!taskMode) {
+      // אם לוחץ על "יצירת משימה חדשה" – ננווט לדף הבית ונפעיל taskMode
+      navigate("/");
+      onToggleTaskMode(true);
+    } else {
+      // ביטול משימה
       setPendingRectangle(null);
       setSearchText("");
       setHasDrawn(false);
@@ -180,46 +262,61 @@ export default function Header({ taskMode, onToggleTaskMode }) {
       setTakeoffPixel(null);
       setLandingPixel(null);
       setBoundingBox(null);
+      safeClearDrawings();
+      onToggleTaskMode(false);
     }
-
-    onToggleTaskMode();
   };
+  
 
   return (
     <>
       <div className="header">
         {/* חיפוש */}
-        <div className="search-container">
-          <input
-            type="text"
-            className="search-input"
-            placeholder="חפש כתובת"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <button className="secondary-button" onClick={handleSearch}>
-            חפש
-          </button>
-          <button className="secondary-button" onClick={() => window.govmap?.showMeasure()}>
-            הפעל מדידה
-          </button>
-        </div>
+        <div
+            className="search-container"
+            style={{ justifyContent: taskMode || location.pathname === "/mission-result" ? "flex-start" : "space-between" }}
+          >
+            {/* שורת חיפוש תופיע רק אם אין משימה פעילה ולא בדף התוצאה */}
+            {!taskMode && location.pathname === "/" && (
+              <>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="חפש כתובת"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                />
+                <button className="secondary-button" onClick={handleSearch}>
+                  חפש
+                </button>
+              </>
+            )}
+
+            {/* יופיע תמיד, אבל ממוקם בהתאם ל־flex-start/space-between */}
+            <button className="secondary-button" onClick={() => window.govmap?.showMeasure()}>
+              הפעל מדידה
+            </button>
+
+            <div className="button-bar">
+              {taskMode && !hasDrawn && location.pathname === "/" && (
+                <button className="secondary-button" onClick={handleDrawRectangle}>
+                  סימון גבולות גזרה
+                </button>
+              )}
+              <button className="primary-button" onClick={handleToggleTaskMode}>
+                {taskMode ? "ביטול משימה" : "יצירת משימה חדשה"}
+              </button>
+            </div>
+          </div>
+
+
 
         {/* כפתורים */}
-        <div className="button-bar">
-          {taskMode && !hasDrawn && (
-            <button className="secondary-button" onClick={handleDrawRectangle}>
-              סימון גבולות גזרה
-            </button>
-          )}
-          <button className="primary-button" onClick={handleToggleTaskMode}>
-            {taskMode ? "ביטול משימה" : "יצירת משימה חדשה"}
-          </button>
-        </div>
-
-        <div className="logo">
+       
+        <div className="logo" onClick={handleResetAndGoHome} style={{ cursor: "pointer" }}>
           <img src={logo} alt="DroneOps Logo" className="logo-img" />
         </div>
+
       </div>
 
       {orthoImageUrl && clickStage && (
@@ -236,12 +333,19 @@ export default function Header({ taskMode, onToggleTaskMode }) {
           alignItems: "center",
           flexDirection: "column"
         }}>
-          <div style={{ position: "relative" }}>
+         <div style={{ position: "relative" }}>
             <img
               ref={imageRef}
               src={orthoImageUrl}
               alt="תצלום אוויר"
               onClick={handleImageClick}
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setMousePosition({
+                  x: e.clientX - rect.left,
+                  y: e.clientY - rect.top,
+                });
+              }}
               style={{
                 maxWidth: "100%",
                 maxHeight: "100%",
@@ -250,34 +354,74 @@ export default function Header({ taskMode, onToggleTaskMode }) {
                 cursor: "crosshair"
               }}
             />
+
             {takeoffPixel && (
               <div style={{
                 position: "absolute",
-                top: takeoffPixel.y - 5,
-                left: takeoffPixel.x - 5,
-                width: 10,
-                height: 10,
-                backgroundColor: "lime",
-                borderRadius: "50%",
-                border: "2px solid black",
-                pointerEvents: "none"
+                top: takeoffPixel.y - 16,  // מיקום המשולש מעל הנקודה
+                left: takeoffPixel.x - 9,
+                width: 0,
+                height: 0,
+                borderLeft: "10px solid transparent",
+                borderRight: "10px solid transparent",
+                borderTop: "22px solid rgb(51, 201, 86)	",  // צבע ירוק
+                filter: "drop-shadow(0 0 2px black)",
+                pointerEvents: "none",
+                zIndex: 1000
               }} />
             )}
+
             {landingPixel && (
               <div style={{
                 position: "absolute",
-                top: landingPixel.y - 5,
-                left: landingPixel.x - 5,
-                width: 10,
-                height: 10,
-                backgroundColor: "red",
-                borderRadius: "50%",
-                border: "2px solid black",
-                pointerEvents: "none"
+                top: landingPixel.y - 16,
+                left: landingPixel.x - 9,
+                width: 0,
+                height: 0,
+                borderLeft: "10px solid transparent",
+                borderRight: "10px solid transparent",
+                borderTop: "22px solid rgb(205, 45, 61)", 
+                filter: "drop-shadow(0 0 2px black)",
+                pointerEvents: "none",
+                zIndex: 1000
               }} />
             )}
-          </div>
 
+
+            {clickStage === "takeoff" && (
+              <div style={{
+                position: "absolute",
+                top: mousePosition.y + 20,
+                left: mousePosition.x + 20,
+                backgroundColor: "white",
+                padding: "4px 8px",
+                borderRadius: "6px",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                fontSize: "14px",
+                pointerEvents: "none",
+                zIndex: 10
+              }}>
+                בחר נקודת המראה
+              </div>
+            )}
+
+            {clickStage === "landing" && (
+              <div style={{
+                position: "absolute",
+                top: mousePosition.y + 20,
+                left: mousePosition.x + 20,
+                backgroundColor: "white",
+                padding: "4px 8px",
+                borderRadius: "6px",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                fontSize: "14px",
+                pointerEvents: "none",
+                zIndex: 10
+              }}>
+                בחר נקודת נחיתה
+              </div>
+            )}
+          </div>
           {/* כפתורים לפי שלב */}
           {clickStage === "takeoff" && takeoffPixel && (
             <button onClick={() => setClickStage("landing")} className="primary-button mt-2">
@@ -291,61 +435,15 @@ export default function Header({ taskMode, onToggleTaskMode }) {
           )}
           {clickStage === "done" && takeoffPixel && landingPixel && (
             <button
-            onClick={async () => {
-              if (isSubmitting) return;
-              setIsSubmitting(true);
-            
-              try {
-                // קבלת תצלום האוויר
-                const orthoRes = await fetch(orthoImageUrl);
-                const orthoBlob = await orthoRes.blob();
-            
-                // יצירת מפת רחובות עם פיקסלים
-                const streetsBlob = await drawPixelsOnStreetsImage();
-            
-                // בניית ה־FormData
-                const formData = new FormData();
-                formData.append("satellite_image", orthoBlob, "ortho.png");
-                formData.append("buildings_image", streetsBlob, "streets_with_markers.png");
-            
-                // בניית הקואורדינטות בפורמט "(x, y)"
-                const topLeftCoord = `(${boundingBox.x1}, ${boundingBox.y1})`;
-                const bottomRightCoord = `(${boundingBox.x2}, ${boundingBox.y2})`;
-                formData.append("top_left_coord", topLeftCoord);
-                formData.append("bottom_right_coord", bottomRightCoord);
-            
-                // שליחה לשרת
-                const response = await fetch("https://skyops-backend-production.up.railway.app/api/create-mission", {
-                method: "POST",
-                body: formData,
-                });
-            
-                const result = await response.json();
-                console.log("📡 תגובת השרת:", result);
-            
-                // איפוס
-                setOrthoImageUrl(null);
-                setStreetsImageUrl(null);
-                setClickStage(null);
-                setTakeoffPixel(null);
-                setLandingPixel(null);
-                setHasDrawn(false);
-                setPendingRectangle(null);
-                setIsSubmitting(false);
-              } catch (error) {
-                console.error("❌ שגיאה בשליחה לשרת:", error);
-                alert("אירעה שגיאה בשליחת המשימה.");
-                setIsSubmitting(false);
-              }
-            }}
               className="primary-button mt-2"
+              onClick={sendMission}
             >
               אישור שליחת משימה
             </button>
           )}
         </div>
       )}
-
+      {/* const response = await fetch("https://skyops-backend-production.up.railway.app/api/create-mission", { */}
       {pendingRectangle && !orthoImageUrl && (
         <div className="floating-confirm-buttons">
           <button
@@ -368,6 +466,39 @@ export default function Header({ taskMode, onToggleTaskMode }) {
           </button>
         </div>
       )}
+      {isLoadingRoute && (
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(255,255,255,0.8)",
+            zIndex: 5000,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: "2rem",
+            fontWeight: "bold",
+            color: "#007bff"
+          }}>
+            ...המסלול בהכנה
+            <div style={{
+              marginTop: 20,
+              width: 40,
+              height: 40,
+              border: "5px solid #f3f3f3",
+              borderTop: "5px solid #007bff",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite"
+            }} />
+            <style>
+              {`@keyframes spin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }`}
+            </style>
+          </div>
+        )}
+
     </>
   );
 }

@@ -64,9 +64,9 @@ export default function Header({ taskMode, onToggleTaskMode }) {
 
       navigate("/mission-result", {
         state: {
-          //  למחוק את שתי הכתובות האלה "http://127.0.0.1:5000" ולהשאיר רק result...
-          imageUrl: "http://127.0.0.1:5000" + result.satelliteImageUrl,
-          textFileUrl: "http://127.0.0.1:5000" + result.coordinatesFileUrl,
+          //  "http://127.0.0.1:5000" + 
+          imageUrl: result.satelliteImageUrl,
+          textFileUrl: result.coordinatesFileUrl,
         }
       });
       

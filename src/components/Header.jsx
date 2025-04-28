@@ -53,7 +53,7 @@ export default function Header({ taskMode, onToggleTaskMode }) {
       formData.append("top_left_coord", `(${boundingBox.x1}, ${boundingBox.y1})`);
       formData.append("bottom_right_coord", `(${boundingBox.x2}, ${boundingBox.y2})`);
   
-      const response = await fetch("http://127.0.0.1:5000/api/create-mission", {
+      const response = await fetch("https://skyops-backend-production.up.railway.app/api/create-mission", {
         method: "POST",
         body: formData,
       });

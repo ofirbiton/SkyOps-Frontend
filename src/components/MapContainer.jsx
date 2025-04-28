@@ -18,7 +18,10 @@ export default function MapContainer() {
         background: "2",
         layersMode: 1,
         zoomButtons: false,
-        onLoad: () => console.log("GovMap loaded"),
+        onLoad: () => {
+          console.log("GovMap loaded");
+          window.govmapReady = true;
+        }
       });
 
       // מאזין לשינוי קנה מידה

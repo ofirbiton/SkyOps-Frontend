@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Header from "./Header/Header.js";
+import Header from "./Header/Header";
 
 export default function MissionResult({ onToggleTaskMode }) {
   const { state } = useLocation();

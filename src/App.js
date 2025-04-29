@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import Header from "./components/Header";
-import MapContainer from "./components/MapContainer";
-import MissionResult from "./components/MissionResult";
+import Header from "./components/Header/Header";
+import MapContainer from "./components/MapContainer/MapContainer";
+import MissionResult from "./components/MissionResult/MissionResult";
 
 function AppContent() {
   const [taskMode, setTaskMode] = useState(false);

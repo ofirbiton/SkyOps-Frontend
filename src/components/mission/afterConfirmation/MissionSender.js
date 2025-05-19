@@ -44,7 +44,7 @@ export async function sendMission({
 
     const SERVER_URL = "https://skyops-backend-production-9e7d.up.railway.app";
 
-    const response = await fetch(`${SERVER_URL}/api/create-mission`, {
+    const response = await fetch("${SERVER_URL}/api/create-mission", {
       method: "POST",
       body: formData,
     });

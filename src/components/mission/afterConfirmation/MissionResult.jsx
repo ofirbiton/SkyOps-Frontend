@@ -21,7 +21,6 @@ export default function MissionResult() {
   const downloadLitchiCsv = async () => {
     if (!textFileUrl) return;
     try {
-      console.log("📦 textFileUrl received:", textFileUrl);
       const resp = await fetch(textFileUrl);
       const json = await resp.json();
       const itmPath = json.path;

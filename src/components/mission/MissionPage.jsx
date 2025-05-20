@@ -72,8 +72,8 @@ export default function MissionPage() {
     if (!showSpeedAlt && serverResult) {
       navigate("/mission-result", {
         state: {
-          imageUrl:  "http://127.0.0.1:5000" + serverResult.satelliteImageUrl,
-          textFileUrl:"http://127.0.0.1:5000" + serverResult.coordinatesFileUrl,
+          imageUrl: serverResult.satelliteImageUrl,
+          textFileUrl: serverResult.coordinatesFileUrl,
           takeoffPixel,
           landingPixel,
           speed,

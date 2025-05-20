@@ -56,8 +56,8 @@ export async function sendMission({
     if (!skipNavigate && navigate) {
       navigate("/mission-result", {
         state: {
-          imageUrl: "http://127.0.0.1:5000/" + result.satelliteImageUrl,
-          textFileUrl: "http://127.0.0.1:5000/" + result.coordinatesFileUrl,
+          imageUrl: result.satelliteImageUrl,
+          textFileUrl: result.coordinatesFileUrl,
           takeoffPixel,
           landingPixel,
           speed,

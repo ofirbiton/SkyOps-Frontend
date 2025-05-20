@@ -42,9 +42,9 @@ export async function sendMission({
     formData.append("top_left_coord", `(${minX}, ${maxY})`);       // (שמאל, צפון)
     formData.append("bottom_right_coord", `(${maxX}, ${minY})`);   // (ימין, דרום)
 
-    const SERVER_URL = "https://skyops-backend-production-0228.up.railway.app";
+    // const SERVER_URL = "https://skyops-backend-production-0228.up.railway.app";
 
-    const response = await fetch(`${SERVER_URL}/api/create-mission`, {
+    const response = await fetch("https://skyops-backend-production-0228.up.railway.app/api/create-mission", {
       method: "POST",
       body: formData,
     });
@@ -65,7 +65,6 @@ export async function sendMission({
         },
       });
     }
-  
 
     onSuccess?.();
     setIsSubmitting(false);

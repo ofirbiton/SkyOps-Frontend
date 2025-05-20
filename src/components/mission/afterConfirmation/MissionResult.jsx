@@ -75,7 +75,6 @@ export default function MissionResult() {
             }}
           >
             <img
-              ref={imgRef}
               src={imageUrl}
               alt="תמונת מסלול"
               onLoad={(e) =>
